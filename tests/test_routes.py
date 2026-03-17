@@ -1,4 +1,4 @@
-"""Tests for Flask routes (webhook and dashboard)."""
+"""Tests for Flask routes (webhook, auth, and dashboard)."""
 
 from unittest import mock
 
@@ -8,14 +8,29 @@ from app import create_app, tracker
 
 
 @pytest.fixture
-def client(tmp_path):
-    """Create a Flask test client with a temp database."""
+def app(tmp_path):
     with mock.patch.object(tracker, "DB_PATH", tmp_path / "test.db"):
-        app = create_app()
-        app.config["TESTING"] = True
+        application = create_app()
+        application.config["TESTING"] = True
         tracker.init_db()
-        with app.test_client() as c:
-            yield c
+        yield application
+
+
+@pytest.fixture
+def client(app):
+    with app.test_client() as c:
+        yield c
+
+
+@pytest.fixture
+def authed_client(app):
+    """A test client with a pre-authenticated session."""
+    with app.test_client() as c:
+        with c.session_transaction() as sess:
+            sess["user_email"] = "test@gmail.com"
+            sess["user_name"] = "Test User"
+            sess["user_picture"] = ""
+        yield c
 
 
 class TestWebhook:
@@ -53,7 +68,7 @@ class TestWebhook:
         assert b"without bracha" in response.data
 
 
-class TestLogin:
+class TestAuth:
     def test_dashboard_redirects_to_login(self, client):
         response = client.get("/")
         assert response.status_code == 302
@@ -62,43 +77,48 @@ class TestLogin:
     def test_login_page_loads(self, client):
         response = client.get("/login")
         assert response.status_code == 200
-        assert b"Password" in response.data
+        assert b"Sign in with Google" in response.data
 
-    def test_wrong_password(self, client):
-        response = client.post("/login", data={"password": "wrong"})
-        assert response.status_code == 200
-        assert b"Incorrect password" in response.data
-
-    def test_correct_password(self, client):
-        response = client.post("/login", data={"password": "test-password"}, follow_redirects=True)
-        assert response.status_code == 200
-
-    def test_logout(self, client):
-        client.post("/login", data={"password": "test-password"})
-        client.get("/logout")
-        response = client.get("/")
+    def test_google_redirect(self, client):
+        response = client.get("/login/google")
         assert response.status_code == 302
+        assert "accounts.google.com" in response.headers["Location"]
+
+    def test_logout_clears_session(self, authed_client):
+        authed_client.get("/logout")
+        response = authed_client.get("/")
+        assert response.status_code == 302
+        assert "/login" in response.headers["Location"]
+
+    def test_already_logged_in_redirects_to_dashboard(self, authed_client):
+        response = authed_client.get("/login")
+        assert response.status_code == 302
+        assert response.headers["Location"] == "/"
 
 
 class TestDashboard:
-    @pytest.fixture(autouse=True)
-    def _log_in(self, client):
-        client.post("/login", data={"password": "test-password"})
-
     @mock.patch("app.routes.get_tzet_hakochavim")
     @mock.patch("app.routes.get_omer_day")
-    def test_dashboard_loads(self, mock_omer_day, mock_tzet, client):
+    def test_dashboard_loads(self, mock_omer_day, mock_tzet, authed_client):
         mock_omer_day.return_value = 10
         mock_tzet.return_value = None
-        response = client.get("/")
+        response = authed_client.get("/")
         assert response.status_code == 200
         assert b"Sefirat HaOmer" in response.data
 
     @mock.patch("app.routes.get_tzet_hakochavim")
     @mock.patch("app.routes.get_omer_day")
-    def test_dashboard_outside_omer(self, mock_omer_day, mock_tzet, client):
+    def test_dashboard_outside_omer(self, mock_omer_day, mock_tzet, authed_client):
         mock_omer_day.return_value = None
         mock_tzet.return_value = None
-        response = client.get("/")
+        response = authed_client.get("/")
         assert response.status_code == 200
         assert b"Not currently in the Omer period" in response.data
+
+    @mock.patch("app.routes.get_tzet_hakochavim")
+    @mock.patch("app.routes.get_omer_day")
+    def test_dashboard_shows_sign_out(self, mock_omer_day, mock_tzet, authed_client):
+        mock_omer_day.return_value = None
+        mock_tzet.return_value = None
+        response = authed_client.get("/")
+        assert b"Sign out" in response.data

@@ -1,4 +1,4 @@
-"""Flask routes: WhatsApp webhook and web dashboard."""
+"""Flask routes: WhatsApp webhook, Google OAuth, and web dashboard."""
 
 import functools
 from datetime import datetime, timedelta
@@ -17,10 +17,56 @@ bp = Blueprint("main", __name__)
 def login_required(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get("authenticated"):
+        if not session.get("user_email"):
             return redirect(url_for("main.login"))
         return f(*args, **kwargs)
     return decorated
+
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+
+@bp.route("/login")
+def login():
+    if session.get("user_email"):
+        return redirect(url_for("main.dashboard"))
+    return render_template("login.html")
+
+
+@bp.route("/login/google")
+def login_google():
+    from app import oauth
+    redirect_uri = url_for("main.auth_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@bp.route("/auth/callback")
+def auth_callback():
+    from app import oauth
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get("userinfo")
+
+    if not userinfo or not userinfo.get("email"):
+        return redirect(url_for("main.login"))
+
+    email = userinfo["email"].lower()
+    if email != config.ALLOWED_EMAIL.lower():
+        session.clear()
+        return render_template("login.html", error="This account is not authorized.")
+
+    session["user_email"] = email
+    session["user_name"] = userinfo.get("name", email)
+    session["user_picture"] = userinfo.get("picture", "")
+    return redirect(url_for("main.dashboard"))
+
+
+@bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("main.login"))
+
+
+# ─── Webhook (no auth — Twilio needs access) ─────────────────────────────────
 
 
 @bp.route("/webhook", methods=["POST"])
@@ -81,21 +127,7 @@ def webhook():
     return str(resp)
 
 
-@bp.route("/login", methods=["GET", "POST"])
-def login():
-    error = None
-    if request.method == "POST":
-        if request.form.get("password") == config.DASHBOARD_PASSWORD:
-            session["authenticated"] = True
-            return redirect(url_for("main.dashboard"))
-        error = "Incorrect password."
-    return render_template("login.html", error=error)
-
-
-@bp.route("/logout")
-def logout():
-    session.pop("authenticated", None)
-    return redirect(url_for("main.login"))
+# ─── Dashboard ────────────────────────────────────────────────────────────────
 
 
 @bp.route("/")
@@ -124,4 +156,6 @@ def dashboard():
         bracha_map=bracha_map,
         total=total,
         streak=streak,
+        user_name=session.get("user_name", ""),
+        user_picture=session.get("user_picture", ""),
     )

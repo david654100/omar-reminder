@@ -171,6 +171,32 @@
       color: var(--text);
     }
 
+    .user-bar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .user-bar img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+
+    .user-bar a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 0.5rem;
+    }
+
+    .user-bar a:hover { color: var(--text); }
+
     .legend {
       display: flex;
       gap: 1.25rem;
@@ -201,6 +227,11 @@
   </style>
 </head>
 <body>
+  <div class="user-bar">
+    {% if user_picture %}<img src="{{ user_picture }}" alt="">{% endif %}
+    {{ user_name }}
+    <a href="{{ url_for('main.logout') }}">Sign out</a>
+  </div>
   <h1>Sefirat HaOmer</h1>
   <p class="subtitle">
     {% if omer_day %}

@@ -4,4 +4,6 @@ apscheduler>=3.10
 zmanim>=0.3
 python-dotenv>=1.0
 gunicorn>=22.0
+authlib>=1.3
+requests>=2.31
 pytest>=8.0
