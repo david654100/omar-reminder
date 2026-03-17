@@ -120,6 +120,14 @@
       border: 2px solid transparent;
       transition: transform 0.15s;
       position: relative;
+      gap: 1px;
+    }
+
+    .cell .date-label {
+      font-size: 0.45rem;
+      font-weight: 400;
+      color: var(--muted);
+      opacity: 0.8;
     }
 
     .cell:hover {
@@ -276,6 +284,7 @@
           {%- elif is_missed %} missed
           {%- endif %}">
           {{ day_num }}
+          <span class="date-label">{{ '%d/%d' % (omer_dates[day_num].month, omer_dates[day_num].day) if day_num in omer_dates else '' }}</span>
         </div>
       {% endfor %}
     </div>

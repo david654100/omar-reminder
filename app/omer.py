@@ -1,6 +1,6 @@
 """Omer counting logic: day calculation, Hebrew text, and transliteration for all 49 days."""
 
-from datetime import date
+from datetime import date, timedelta
 
 BRACHA_HEBREW = (
     "בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם "
@@ -165,6 +165,12 @@ _OMER_STARTS = {
 
 def get_omer_start(year: int) -> date:
     return _OMER_STARTS.get(year, date(year, 4, 10))
+
+
+def get_omer_dates(year: int) -> dict[int, date]:
+    """Return a dict mapping Omer day number (1-49) to its Gregorian date."""
+    start = get_omer_start(year)
+    return {day: start + timedelta(days=day - 1) for day in range(1, 50)}
 
 
 def get_omer_day(today: date) -> int | None:

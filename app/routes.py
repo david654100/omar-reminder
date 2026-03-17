@@ -8,7 +8,7 @@ from flask import Blueprint, redirect, render_template, request, session, url_fo
 from twilio.twiml.messaging_response import MessagingResponse
 
 from app import config, tracker
-from app.omer import get_omer_day
+from app.omer import get_omer_dates, get_omer_day
 from app.zmanim import get_tzet_hakochavim
 
 bp = Blueprint("main", __name__)
@@ -146,6 +146,7 @@ def dashboard():
     total = tracker.get_total_counted()
     streak = tracker.get_current_streak()
     tzet_str = tzet.strftime("%I:%M %p") if tzet else "N/A"
+    omer_dates = get_omer_dates(today.year)
 
     return render_template(
         "dashboard.html",
@@ -156,6 +157,7 @@ def dashboard():
         bracha_map=bracha_map,
         total=total,
         streak=streak,
+        omer_dates=omer_dates,
         user_name=session.get("user_name", ""),
         user_picture=session.get("user_picture", ""),
     )
