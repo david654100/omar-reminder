@@ -4,6 +4,7 @@ import logging
 
 from authlib.integrations.flask_client import OAuth
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app import config
 
@@ -15,6 +16,9 @@ oauth = OAuth()
 def create_app() -> Flask:
     application = Flask(__name__)
     application.secret_key = config.SECRET_KEY
+
+    # Trust Render's reverse proxy headers so url_for generates https:// URLs
+    application.wsgi_app = ProxyFix(application.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     oauth.init_app(application)
     oauth.register(
