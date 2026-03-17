@@ -53,7 +53,38 @@ class TestWebhook:
         assert b"without bracha" in response.data
 
 
+class TestLogin:
+    def test_dashboard_redirects_to_login(self, client):
+        response = client.get("/")
+        assert response.status_code == 302
+        assert "/login" in response.headers["Location"]
+
+    def test_login_page_loads(self, client):
+        response = client.get("/login")
+        assert response.status_code == 200
+        assert b"Password" in response.data
+
+    def test_wrong_password(self, client):
+        response = client.post("/login", data={"password": "wrong"})
+        assert response.status_code == 200
+        assert b"Incorrect password" in response.data
+
+    def test_correct_password(self, client):
+        response = client.post("/login", data={"password": "test-password"}, follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_logout(self, client):
+        client.post("/login", data={"password": "test-password"})
+        client.get("/logout")
+        response = client.get("/")
+        assert response.status_code == 302
+
+
 class TestDashboard:
+    @pytest.fixture(autouse=True)
+    def _log_in(self, client):
+        client.post("/login", data={"password": "test-password"})
+
     @mock.patch("app.routes.get_tzet_hakochavim")
     @mock.patch("app.routes.get_omer_day")
     def test_dashboard_loads(self, mock_omer_day, mock_tzet, client):

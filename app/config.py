@@ -16,3 +16,4 @@ LOCATION_NAME = os.getenv("LOCATION_NAME", "Minneapolis")
 MORNING_REMINDER_HOUR = int(os.getenv("MORNING_REMINDER_HOUR", "8"))
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
+DASHBOARD_PASSWORD = os.environ["DASHBOARD_PASSWORD"]

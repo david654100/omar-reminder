@@ -1,9 +1,10 @@
 """Flask routes: WhatsApp webhook and web dashboard."""
 
+import functools
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, session, url_for
 from twilio.twiml.messaging_response import MessagingResponse
 
 from app import config, tracker
@@ -11,6 +12,15 @@ from app.omer import get_omer_day
 from app.zmanim import get_tzet_hakochavim
 
 bp = Blueprint("main", __name__)
+
+
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("main.login"))
+        return f(*args, **kwargs)
+    return decorated
 
 
 @bp.route("/webhook", methods=["POST"])
@@ -71,7 +81,25 @@ def webhook():
     return str(resp)
 
 
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == config.DASHBOARD_PASSWORD:
+            session["authenticated"] = True
+            return redirect(url_for("main.dashboard"))
+        error = "Incorrect password."
+    return render_template("login.html", error=error)
+
+
+@bp.route("/logout")
+def logout():
+    session.pop("authenticated", None)
+    return redirect(url_for("main.login"))
+
+
 @bp.route("/")
+@login_required
 def dashboard():
     """Render the web dashboard."""
     tz = ZoneInfo(config.TIMEZONE)
