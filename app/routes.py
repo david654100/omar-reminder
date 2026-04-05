@@ -4,7 +4,7 @@ import functools
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from twilio.twiml.messaging_response import MessagingResponse
 
 from app import config, tracker
@@ -135,9 +135,18 @@ def webhook():
 def dashboard():
     """Render the web dashboard."""
     tz = ZoneInfo(config.TIMEZONE)
-    today = datetime.now(tz).date()
-    omer_day = get_omer_day(today)
+    now = datetime.now(tz)
+    today = now.date()
+    tonight_day = get_omer_day(today)
+    last_night_day = get_omer_day(today - timedelta(days=1))
     tzet = get_tzet_hakochavim(today)
+
+    past_nightfall = tzet is not None and now >= tzet
+
+    if past_nightfall:
+        current_day = tonight_day
+    else:
+        current_day = last_night_day
 
     counts = tracker.get_all_counts()
     counted_set = {c["omer_day"] for c in counts}
@@ -150,7 +159,9 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        omer_day=omer_day,
+        current_day=current_day,
+        tonight_day=tonight_day,
+        past_nightfall=past_nightfall,
         today=today,
         tzet_str=tzet_str,
         counted_set=counted_set,
@@ -161,3 +172,22 @@ def dashboard():
         user_name=session.get("user_name", ""),
         user_picture=session.get("user_picture", ""),
     )
+
+
+@bp.route("/override", methods=["POST"])
+@login_required
+def override_day():
+    """Mark a missed Omer day as counted from the dashboard."""
+    data = request.get_json(silent=True) or {}
+    try:
+        omer_day_num = int(data.get("day", 0))
+    except (TypeError, ValueError):
+        return jsonify(ok=False, error="Invalid day"), 400
+
+    if not 1 <= omer_day_num <= 49:
+        return jsonify(ok=False, error="Day must be 1-49"), 400
+
+    with_bracha = bool(data.get("with_bracha", False))
+    is_new = tracker.record_count(omer_day_num, with_bracha=with_bracha, reminder_type="manual")
+
+    return jsonify(ok=True, is_new=is_new)

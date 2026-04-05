@@ -20,12 +20,24 @@ def _get_client() -> Client:
 
 def send_whatsapp(body: str) -> None:
     """Send a WhatsApp message to the configured phone number."""
+    preview = body[:80].replace("\n", " ")
     try:
-        _get_client().messages.create(
+        msg = _get_client().messages.create(
             from_=config.TWILIO_WHATSAPP_NUMBER,
             to=config.MY_PHONE_NUMBER,
             body=body,
         )
-        log.info("WhatsApp message sent.")
+        log.info(
+            "WhatsApp sent to %s [sid=%s]: %s%s",
+            config.MY_PHONE_NUMBER,
+            msg.sid,
+            preview,
+            "…" if len(body) > 80 else "",
+        )
     except Exception:
-        log.exception("Failed to send WhatsApp message.")
+        log.exception(
+            "Failed to send WhatsApp to %s: %s%s",
+            config.MY_PHONE_NUMBER,
+            preview,
+            "…" if len(body) > 80 else "",
+        )

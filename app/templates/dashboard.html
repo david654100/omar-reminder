@@ -149,6 +149,12 @@
     .cell.today {
       border-color: var(--ring);
       box-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
+      cursor: pointer;
+    }
+
+    .cell.today:hover {
+      background: #1e1b3a;
+      box-shadow: 0 0 18px rgba(167, 139, 250, 0.6);
     }
 
     .cell.future {
@@ -159,7 +165,74 @@
       background: #1c1917;
       color: #78716c;
       border-color: #44403c;
+      cursor: pointer;
     }
+
+    .cell.missed:hover {
+      border-color: #a78bfa;
+      color: #a5b4fc;
+      background: #1e1b2e;
+    }
+
+    /* Override confirmation modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .modal-btn {
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .modal-btn:hover { border-color: var(--accent); }
+    .modal-btn.green { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .modal-btn.green:hover { background: #1a4d2e; }
+    .modal-btn.amber { background: #422006; border-color: var(--amber); color: var(--amber); }
+    .modal-btn.amber:hover { background: #5a2d0a; }
+    .modal-btn.cancel { color: var(--muted); }
 
     .cell .week-label {
       font-size: 0.5rem;
@@ -242,8 +315,15 @@
   </div>
   <h1>Sefirat HaOmer</h1>
   <p class="subtitle">
-    {% if omer_day %}
-      Tonight is night {{ omer_day }} of 49 &middot; Tzet Hakochavim at {{ tzet_str }}
+    {% if current_day %}
+      Day {{ current_day }} of 49
+      {% if past_nightfall %}
+        &middot; Nightfall has passed — count tonight!
+      {% elif tonight_day %}
+        &middot; Count night {{ tonight_day }} at {{ tzet_str }}
+      {% endif %}
+    {% elif tonight_day %}
+      Omer begins tonight at {{ tzet_str }}
     {% else %}
       Not currently in the Omer period
     {% endif %}
@@ -259,7 +339,11 @@
       <div class="stat-label">Current Streak</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value">{{ omer_day or '—' }}</div>
+      <div class="stat-value">{{ current_day or '—' }}</div>
+      <div class="stat-label">Current Day</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ tonight_day or '—' }}</div>
       <div class="stat-label">Tonight</div>
     </div>
   </div>
@@ -272,9 +356,9 @@
       {% for day_num in range(1, 50) %}
         {% set weeks = (day_num - 1) // 7 + 1 %}
         {% set is_counted = day_num in counted_set %}
-        {% set is_today = day_num == omer_day %}
-        {% set is_future = omer_day is not none and day_num > omer_day %}
-        {% set is_missed = not is_counted and not is_future and (omer_day is none or day_num < omer_day) %}
+        {% set is_today = day_num == current_day %}
+        {% set is_future = current_day is not none and day_num > current_day %}
+        {% set is_missed = not is_counted and not is_future and not is_today and (current_day is none or day_num < current_day) %}
         {% set has_bracha = bracha_map.get(day_num, true) %}
         <div class="cell
           {%- if is_counted and has_bracha %} counted
@@ -282,7 +366,8 @@
           {%- elif is_today %} today
           {%- elif is_future %} future
           {%- elif is_missed %} missed
-          {%- endif %}">
+          {%- endif %}"
+          {%- if is_missed or is_today %} data-day="{{ day_num }}"{% endif %}>
           {{ day_num }}
           <span class="date-label">{{ '%d/%d' % (omer_dates[day_num].month, omer_dates[day_num].day) if day_num in omer_dates else '' }}</span>
         </div>
@@ -294,12 +379,86 @@
     <div class="legend-item"><div class="legend-dot counted"></div> Counted</div>
     <div class="legend-item"><div class="legend-dot no-bracha"></div> No bracha</div>
     <div class="legend-item"><div class="legend-dot missed"></div> Missed</div>
-    <div class="legend-item"><div class="legend-dot today"></div> Tonight</div>
+    <div class="legend-item"><div class="legend-dot today"></div> Current Day</div>
     <div class="legend-item"><div class="legend-dot future"></div> Upcoming</div>
   </div>
 
   <div class="info">
     <p>{{ today.strftime('%B %d, %Y') }} &middot; {{ total }} of 49 nights counted</p>
   </div>
+
+  <div class="modal-overlay" id="overrideModal">
+    <div class="modal">
+      <h3>Mark Day <span id="modalDay"></span> as Counted</h3>
+      <p>Did you count this day with a bracha?</p>
+      <div class="modal-buttons">
+        <button class="modal-btn green" id="btnBracha">Yes, with bracha</button>
+        <button class="modal-btn amber" id="btnNoBracha">No bracha</button>
+        <button class="modal-btn cancel" id="btnCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var pendingDay = null;
+      var overlay = document.getElementById('overrideModal');
+      var modalDay = document.getElementById('modalDay');
+      var btnBracha = document.getElementById('btnBracha');
+      var btnNoBracha = document.getElementById('btnNoBracha');
+      var btnCancel = document.getElementById('btnCancel');
+      var overrideUrl = '{{ url_for("main.override_day") }}';
+
+      document.querySelector('.grid').addEventListener('click', function(e) {
+        var cell = e.target.closest('[data-day]');
+        if (!cell) return;
+        pendingDay = parseInt(cell.getAttribute('data-day'), 10);
+        modalDay.textContent = pendingDay;
+        overlay.classList.add('active');
+      });
+
+      function closeModal() {
+        pendingDay = null;
+        overlay.classList.remove('active');
+        btnBracha.disabled = false;
+        btnBracha.textContent = 'Yes, with bracha';
+        btnNoBracha.disabled = false;
+        btnNoBracha.textContent = 'No bracha';
+      }
+
+      function submit(withBracha, btn) {
+        if (!pendingDay) return;
+        btn.disabled = true;
+        btn.textContent = 'Saving\u2026';
+
+        fetch(overrideUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ day: pendingDay, with_bracha: withBracha })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            window.location.reload();
+          } else {
+            alert(data.error || 'Something went wrong');
+            closeModal();
+          }
+        })
+        .catch(function() {
+          alert('Network error \u2014 please try again');
+          closeModal();
+        });
+      }
+
+      btnBracha.addEventListener('click', function() { submit(true, this); });
+      btnNoBracha.addEventListener('click', function() { submit(false, this); });
+      btnCancel.addEventListener('click', closeModal);
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeModal();
+      });
+
+    })();
+  </script>
 </body>
 </html>
