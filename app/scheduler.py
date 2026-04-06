@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app import config
-from app.messaging import send_whatsapp
+from app.messaging import send_sms
 from app.omer import format_morning_message, format_night_message, get_omer_day
 from app.zmanim import get_tzet_hakochavim, should_skip_evening, should_skip_morning
 from app import tracker
@@ -31,7 +31,7 @@ def _send_evening_reminder() -> None:
         log.info("Night reminder already sent for day %d. Skipping.", omer_day)
         return
 
-    send_whatsapp(format_night_message(omer_day))
+    send_sms(format_night_message(omer_day))
     tracker.record_reminder_sent(omer_day, "night")
     log.info("Sent night reminder for Omer day %d.", omer_day)
 
@@ -59,7 +59,7 @@ def _send_morning_followup() -> None:
         log.info("Morning reminder already sent for day %d. Skipping.", omer_day)
         return
 
-    send_whatsapp(format_morning_message(omer_day))
+    send_sms(format_morning_message(omer_day))
     tracker.record_reminder_sent(omer_day, "morning")
     log.info("Sent morning followup for Omer day %d.", omer_day)
 

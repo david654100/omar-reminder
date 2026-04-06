@@ -1,4 +1,4 @@
-"""Twilio WhatsApp messaging."""
+"""Twilio SMS messaging."""
 
 import logging
 
@@ -10,6 +10,8 @@ log = logging.getLogger(__name__)
 
 _client: Client | None = None
 
+SMS_MAX_LENGTH = 1600
+
 
 def _get_client() -> Client:
     global _client
@@ -18,26 +20,19 @@ def _get_client() -> Client:
     return _client
 
 
-def send_whatsapp(body: str) -> None:
-    """Send a WhatsApp message to the configured phone number."""
+def send_sms(body: str) -> None:
+    """Send an SMS via Twilio. Truncates if the body exceeds 1600 chars."""
+    if len(body) > SMS_MAX_LENGTH:
+        body = body[: SMS_MAX_LENGTH - 30] + "\n\n(message truncated)"
+
     preview = body[:80].replace("\n", " ")
+    suffix = "…" if len(body) > 80 else ""
     try:
         msg = _get_client().messages.create(
-            from_=config.TWILIO_WHATSAPP_NUMBER,
+            from_=config.TWILIO_PHONE_NUMBER,
             to=config.MY_PHONE_NUMBER,
             body=body,
         )
-        log.info(
-            "WhatsApp sent to %s [sid=%s]: %s%s",
-            config.MY_PHONE_NUMBER,
-            msg.sid,
-            preview,
-            "…" if len(body) > 80 else "",
-        )
+        log.info("SMS sent [sid=%s]: %s%s", msg.sid, preview, suffix)
     except Exception:
-        log.exception(
-            "Failed to send WhatsApp to %s: %s%s",
-            config.MY_PHONE_NUMBER,
-            preview,
-            "…" if len(body) > 80 else "",
-        )
+        log.exception("Failed to send SMS: %s%s", preview, suffix)

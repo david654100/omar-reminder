@@ -1,15 +1,15 @@
 # Omer Reminder
 
-A WhatsApp bot that sends you a nightly reminder to count Sefirat HaOmer at **tzet hakochavim** (nightfall), calculated for Minneapolis. Includes the full bracha and count text in Hebrew with transliteration.
+Sends you a nightly SMS reminder to count Sefirat HaOmer at **tzet hakochavim** (nightfall), calculated for Minneapolis. Includes the full bracha and count text in Hebrew with transliteration.
 
 ## Features
 
-- Sends WhatsApp reminder at the exact tzet hakochavim time each night
+- Sends SMS reminder at the exact tzet hakochavim time each night
 - Includes the bracha and count in Hebrew + transliteration
 - Skips Shabbat and Yom Tov
 - Morning follow-up (without bracha) if you missed the night before
-- Reply "YES" to confirm you counted
-- Reply "STATUS" for a summary of your counting history
+- Reply "YES" via SMS to confirm you counted
+- Reply "STATUS" via SMS for a summary of your counting history
 - Web dashboard with a 7x7 Omer grid, streak tracker, and history
 
 ## Project Structure
@@ -26,7 +26,7 @@ A WhatsApp bot that sends you a nightly reminder to count Sefirat HaOmer at **tz
 └── app/
     ├── __init__.py       # Flask app factory
     ├── config.py         # Loads settings from .env
-    ├── messaging.py      # Twilio WhatsApp send logic
+    ├── messaging.py      # Twilio SMS send logic
     ├── omer.py           # Counting text: bracha, Hebrew, transliteration
     ├── routes.py         # Flask routes: /webhook and / (dashboard)
     ├── scheduler.py      # APScheduler: evening + morning reminder jobs
@@ -47,9 +47,8 @@ A WhatsApp bot that sends you a nightly reminder to count Sefirat HaOmer at **tz
 ### 1. Twilio Account
 
 1. Sign up at [twilio.com](https://www.twilio.com)
-2. Go to **Messaging > Try it out > Send a WhatsApp message** to activate the sandbox
-3. Follow the instructions to join the sandbox from your phone
-4. Note your **Account SID**, **Auth Token**, and sandbox WhatsApp number
+2. Buy an SMS-capable phone number (Phone Numbers > Buy a Number)
+3. Note your **Account SID**, **Auth Token**, and the phone number you purchased
 
 ### 2. Configure Environment
 
@@ -57,7 +56,7 @@ A WhatsApp bot that sends you a nightly reminder to count Sefirat HaOmer at **tz
 cp .env.example .env
 ```
 
-Edit `.env` with your Twilio credentials and phone number.
+Edit `.env` with your Twilio credentials and phone numbers.
 
 ### 3. Install & Run
 
@@ -68,13 +67,15 @@ python run.py
 
 The app runs on `http://localhost:5000`. The dashboard is at `/` and the Twilio webhook is at `/webhook`.
 
-### 4. Configure Twilio Webhook
+### 4. Configure Twilio Webhook (for SMS replies)
 
-Set your Twilio WhatsApp sandbox webhook URL to:
+Set your Twilio phone number's **Messaging webhook URL** to:
 
 ```
 https://your-server.com/webhook
 ```
+
+You can configure this in the Twilio Console under Phone Numbers > Active Numbers > your number > Messaging.
 
 For local development, use [ngrok](https://ngrok.com):
 
@@ -82,7 +83,7 @@ For local development, use [ngrok](https://ngrok.com):
 ngrok http 5000
 ```
 
-Then paste the ngrok URL + `/webhook` into the Twilio sandbox settings.
+Then paste the ngrok URL + `/webhook` into your Twilio number's messaging settings.
 
 ### 5. Deploy (Optional)
 
@@ -106,8 +107,8 @@ Tests cover Omer day calculations, Hebrew/transliteration output for all 49 days
 ## How It Works
 
 1. **3:00 PM daily** — calculates tonight's tzet hakochavim for Minneapolis
-2. **At tzet hakochavim** — sends WhatsApp with bracha + count (unless Shabbat/Yom Tov)
+2. **At tzet hakochavim** — sends SMS with bracha + count (unless Shabbat/Yom Tov)
 3. **8:00 AM next day** — if you didn't reply YES, sends a follow-up without the bracha
-4. **You reply YES** — recorded in the database, streak updated
-5. **You reply STATUS** — get a text summary of your counting history
+4. **You reply YES via SMS** — recorded in the database, streak updated
+5. **You reply STATUS via SMS** — get a text summary of your counting history
 6. **Visit the dashboard** — see a visual 7x7 grid of your Omer counting progress
