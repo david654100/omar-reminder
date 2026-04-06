@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Omer Reminder</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 700px;
+      width: 100%;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+    .updated { color: var(--muted); font-size: 0.8rem; margin-bottom: 2rem; }
+    h2 { font-size: 1.1rem; margin-top: 1.75rem; margin-bottom: 0.5rem; color: var(--accent); }
+    p, li { line-height: 1.7; color: var(--muted); font-size: 0.9rem; }
+    p { margin-bottom: 0.75rem; }
+    ul { margin-left: 1.25rem; margin-bottom: 0.75rem; }
+    li { margin-bottom: 0.3rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back { display: inline-block; margin-top: 2rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: April 6, 2026</p>
+
+    <p>Omer Reminder ("the Service") is a personal reminder application that sends SMS notifications to help you count Sefirat HaOmer. Your privacy is important to us.</p>
+
+    <h2>Information We Collect</h2>
+    <p>The Service collects and stores only the minimum data necessary to function:</p>
+    <ul>
+      <li><strong>Phone number</strong> — Your phone number, provided by you in the application configuration, used solely to send SMS reminders via Twilio.</li>
+      <li><strong>Google account info</strong> — Your name, email address, and profile picture, obtained through Google OAuth sign-in, used solely for dashboard authentication.</li>
+      <li><strong>Omer counting data</strong> — Records of which Omer days you have counted, stored in a local database to track your progress.</li>
+    </ul>
+
+    <h2>How We Use Your Information</h2>
+    <p>Your information is used exclusively to:</p>
+    <ul>
+      <li>Send you scheduled Omer counting reminders via SMS</li>
+      <li>Authenticate you on the web dashboard</li>
+      <li>Display your counting progress and streak</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <p>The Service uses the following third-party providers:</p>
+    <ul>
+      <li><strong>Twilio</strong> — To send and receive SMS messages. Your phone number is shared with Twilio for this purpose. See <a href="https://www.twilio.com/legal/privacy" target="_blank">Twilio's Privacy Policy</a>.</li>
+      <li><strong>Google OAuth</strong> — To authenticate your identity. See <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</li>
+    </ul>
+
+    <h2>Data Sharing</h2>
+    <p>We do not sell, rent, or share your personal information with any third parties beyond what is described above. No data is used for marketing or advertising purposes.</p>
+
+    <h2>Data Storage and Security</h2>
+    <p>All data is stored locally on the server running the application. The Service uses HTTPS for data in transit and restricts dashboard access to a single authorized email address.</p>
+
+    <h2>Data Retention</h2>
+    <p>Your counting data is retained for the duration of the Omer period and any subsequent periods you use the Service. You may delete all data at any time by clearing the application database.</p>
+
+    <h2>Opting Out of SMS</h2>
+    <p>You can stop receiving SMS messages at any time by:</p>
+    <ul>
+      <li>Replying STOP to any message</li>
+      <li>Removing your phone number from the application configuration</li>
+      <li>Disabling or shutting down the application</li>
+    </ul>
+
+    <h2>Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date.</p>
+
+    <h2>Contact</h2>
+    <p>If you have questions about this Privacy Policy, please contact the application administrator.</p>
+
+    <a href="/" class="back">&larr; Back to Dashboard</a>
+  </div>
+</body>
+</html>

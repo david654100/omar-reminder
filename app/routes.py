@@ -1,4 +1,4 @@
-"""Flask routes: WhatsApp webhook, Google OAuth, and web dashboard."""
+"""Flask routes: SMS webhook, Google OAuth, and web dashboard."""
 
 import functools
 from datetime import datetime, timedelta
@@ -71,7 +71,7 @@ def logout():
 
 @bp.route("/webhook", methods=["POST"])
 def webhook():
-    """Handle incoming WhatsApp messages from Twilio."""
+    """Handle incoming SMS messages from Twilio."""
     body = request.form.get("Body", "").strip().lower()
     resp = MessagingResponse()
 
@@ -191,3 +191,16 @@ def override_day():
     is_new = tracker.record_count(omer_day_num, with_bracha=with_bracha, reminder_type="manual")
 
     return jsonify(ok=True, is_new=is_new)
+
+
+# ─── Legal Pages (public) ─────────────────────────────────────────────────
+
+
+@bp.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@bp.route("/terms")
+def terms():
+    return render_template("terms.html")

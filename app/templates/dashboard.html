@@ -305,6 +305,16 @@
     .legend-dot.missed { background: #1c1917; border: 2px solid #44403c; }
     .legend-dot.today { background: #0f172a; border: 2px solid var(--ring); box-shadow: 0 0 6px rgba(167, 139, 250, 0.4); }
     .legend-dot.future { background: #0f172a; opacity: 0.3; border: 2px solid var(--border); }
+
+    .legal-links {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+    }
+    .legal-links a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .legal-links a:hover { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -385,6 +395,10 @@
 
   <div class="info">
     <p>{{ today.strftime('%B %d, %Y') }} &middot; {{ total }} of 49 nights counted</p>
+    <p class="legal-links">
+      <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> &middot;
+      <a href="{{ url_for('main.terms') }}">Terms and Conditions</a>
+    </p>
   </div>
 
   <div class="modal-overlay" id="overrideModal">

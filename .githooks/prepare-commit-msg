@@ -1,0 +1,9 @@
+#!/bin/sh
+# Remove Cursor IDE lines some tools append to commit messages.
+msg_file=$1
+[ -z "$msg_file" ] || [ ! -f "$msg_file" ] && exit 0
+tmp="${msg_file}.new"
+grep -v -i '^\s*Co-authored-by:.*cursor' "$msg_file" \
+  | grep -v -i '^\s*Made with Cursor\s*$' \
+  | grep -v -i '^\s*Generated with Cursor' \
+  > "$tmp" && mv "$tmp" "$msg_file"

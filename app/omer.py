@@ -184,7 +184,7 @@ def get_omer_day(today: date) -> int | None:
 
 
 def format_night_message(day: int) -> str:
-    """Format the full nightly WhatsApp reminder with bracha and count."""
+    """Format the full nightly reminder with bracha and count."""
     weeks, remainder = divmod(day, 7)
     if weeks == 0:
         summary = f"Night {day} of the Omer"
@@ -199,12 +199,12 @@ def format_night_message(day: int) -> str:
         )
 
     return (
-        f"✨ *{summary}*\n\n"
-        f"*Bracha:*\n{BRACHA_HEBREW}\n\n"
-        f"_{BRACHA_TRANSLITERATION}_\n\n"
-        f"*Count:*\n{get_count_hebrew(day)}\n\n"
-        f"_{get_count_transliteration(day)}_\n\n"
-        f"Reply *YES* when you've counted."
+        f"✨ {summary}\n\n"
+        f"Bracha:\n{BRACHA_HEBREW}\n\n"
+        f"{BRACHA_TRANSLITERATION}\n\n"
+        f"Count:\n{get_count_hebrew(day)}\n\n"
+        f"{get_count_transliteration(day)}\n\n"
+        f"Reply YES when you've counted."
     )
 
 
@@ -224,9 +224,9 @@ def format_morning_message(day: int) -> str:
         )
 
     return (
-        f"⏰ *You missed last night — count now WITHOUT a bracha*\n\n"
-        f"*{summary}*\n\n"
-        f"*Count (no bracha):*\n{get_count_hebrew(day)}\n\n"
-        f"_{get_count_transliteration(day)}_\n\n"
-        f"Reply *YES* when you've counted."
+        f"⏰ You missed last night — count now WITHOUT a bracha\n\n"
+        f"{summary}\n\n"
+        f"Count (no bracha):\n{get_count_hebrew(day)}\n\n"
+        f"{get_count_transliteration(day)}\n\n"
+        f"Reply YES when you've counted."
     )
