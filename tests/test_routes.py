@@ -122,3 +122,15 @@ class TestDashboard:
         mock_tzet.return_value = None
         response = authed_client.get("/")
         assert b"Sign out" in response.data
+
+
+class TestLegalPages:
+    def test_privacy_page(self, client):
+        response = client.get("/privacy")
+        assert response.status_code == 200
+        assert b"Privacy Policy" in response.data
+
+    def test_terms_page(self, client):
+        response = client.get("/terms")
+        assert response.status_code == 200
+        assert b"Terms and Conditions" in response.data

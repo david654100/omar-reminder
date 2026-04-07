@@ -1,4 +1,15 @@
-"""APScheduler jobs: evening reminders at tzet hakochavim and morning follow-ups."""
+"""Scheduled jobs: Omer reminders, morning follow-ups, and Gmail reply polling.
+
+Uses APScheduler (``BackgroundScheduler``) with the app's configured timezone.
+
+Jobs registered by :func:`start`:
+
+* Daily at 15:00 local — plan tonight's evening reminder at tzet hakochavim.
+* Daily at ``MORNING_REMINDER_HOUR`` — morning SMS/email if yesterday not counted.
+* Every ``EMAIL_REPLY_POLL_MINUTES`` — process ``YES`` / ``STATUS`` email replies.
+
+Evening and morning sends use :func:`app.messaging.send_notification` (SMS + email).
+"""
 
 import logging
 from datetime import datetime, timedelta
@@ -18,7 +29,7 @@ scheduler = BackgroundScheduler(timezone=config.TIMEZONE)
 
 
 def _send_evening_reminder() -> None:
-    """Send the nightly Omer reminder."""
+    """Send tonight's reminder (SMS + email) if in Omer and not already sent."""
     tz = ZoneInfo(config.TIMEZONE)
     today = datetime.now(tz).date()
     omer_day = get_omer_day(today)
@@ -40,7 +51,7 @@ def _send_evening_reminder() -> None:
 
 
 def _send_morning_followup() -> None:
-    """Send a morning follow-up if last night's count wasn't confirmed."""
+    """Send morning follow-up for yesterday's Omer day if still uncounted."""
     tz = ZoneInfo(config.TIMEZONE)
     today = datetime.now(tz).date()
 
@@ -71,10 +82,7 @@ def _send_morning_followup() -> None:
 
 
 def _schedule_evening_reminder() -> None:
-    """
-    Daily afternoon job: calculates tonight's tzet hakochavim and schedules
-    the actual reminder at the exact time.
-    """
+    """Compute tzet for today and schedule (or run) the evening reminder job."""
     tz = ZoneInfo(config.TIMEZONE)
     today = datetime.now(tz).date()
 
@@ -114,7 +122,11 @@ def _schedule_evening_reminder() -> None:
 
 
 def _process_email_replies() -> None:
-    """Process unread Gmail replies (YES/STATUS) from ALLOWED_EMAIL."""
+    """Apply YES/STATUS commands from :func:`fetch_email_reply_commands`.
+
+    ``yes`` uses the same pending-day logic as the SMS webhook. ``status`` sends
+    a summary email via :func:`app.messaging.send_email` (email only, no SMS).
+    """
     commands = fetch_email_reply_commands()
     if not commands:
         return
@@ -154,7 +166,7 @@ def _process_email_replies() -> None:
 
 
 def start() -> None:
-    """Start the scheduler with daily jobs."""
+    """Register cron/interval jobs and start the background scheduler."""
     scheduler.add_job(
         _schedule_evening_reminder,
         "cron",

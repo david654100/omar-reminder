@@ -1,4 +1,10 @@
-"""SMS and email notification sending."""
+"""Outbound SMS (Twilio) and email (Gmail SMTP), plus Gmail IMAP reply polling.
+
+Reminders use :func:`send_notification` to deliver both channels. Inbound email
+commands (unread messages from :attr:`config.ALLOWED_EMAIL` whose body starts
+with ``yes`` or ``status``) are collected by :func:`fetch_email_reply_commands`
+for the scheduler to process.
+"""
 
 import email
 import imaplib
@@ -19,6 +25,7 @@ SMS_MAX_LENGTH = 1600
 
 
 def _get_client() -> Client:
+    """Return a singleton Twilio REST client."""
     global _client
     if _client is None:
         _client = Client(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN)
@@ -26,7 +33,14 @@ def _get_client() -> Client:
 
 
 def send_sms(body: str) -> None:
-    """Send an SMS via Twilio. Truncates if the body exceeds 1600 chars."""
+    """Send an SMS via Twilio to ``MY_PHONE_NUMBER``.
+
+    Long bodies are truncated to fit Twilio limits. Errors are logged and not
+    re-raised.
+
+    Args:
+        body: Plain-text message body.
+    """
     if len(body) > SMS_MAX_LENGTH:
         body = body[: SMS_MAX_LENGTH - 30] + "\n\n(message truncated)"
 
@@ -44,7 +58,22 @@ def send_sms(body: str) -> None:
 
 
 def send_email(subject: str, body: str, *, raise_on_error: bool = False) -> bool:
-    """Send an email notification to ALLOWED_EMAIL via Gmail SMTP."""
+    """Send a plain-text email to ``ALLOWED_EMAIL`` using Gmail SMTP.
+
+    Uses ``GMAIL_ADDRESS`` and ``GMAIL_APP_PASSWORD`` for authentication.
+
+    Args:
+        subject: Email subject line.
+        body: Plain-text body.
+        raise_on_error: If True, re-raise after logging; if False, return False.
+
+    Returns:
+        True if the message was sent successfully, False on failure (when
+        ``raise_on_error`` is False).
+
+    Raises:
+        Exception: Any SMTP error when ``raise_on_error`` is True.
+    """
     msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = subject
     msg["From"] = config.GMAIL_ADDRESS
@@ -65,13 +94,28 @@ def send_email(subject: str, body: str, *, raise_on_error: bool = False) -> bool
 
 
 def send_notification(body: str, subject: str = "Omer Reminder") -> None:
-    """Send both SMS and email reminders."""
+    """Send the same reminder via SMS and email.
+
+    Each channel is independent; a failure in one is logged but does not block
+    the other.
+
+    Args:
+        body: Shared plain-text body for SMS and email.
+        subject: Email subject (SMS has no subject).
+    """
     send_sms(body)
     send_email(subject, body)
 
 
 def _extract_text_body(raw_msg: bytes) -> str:
-    """Return a plain-text best effort body from a raw RFC822 message."""
+    """Best-effort decode of the first text/plain part from raw RFC822 bytes.
+
+    Args:
+        raw_msg: Full message as received from IMAP ``RFC822`` fetch.
+
+    Returns:
+        Decoded plain text, possibly empty if no suitable part exists.
+    """
     msg = email.message_from_bytes(raw_msg, policy=policy.default)
     if msg.is_multipart():
         for part in msg.walk():
@@ -90,9 +134,16 @@ def _extract_text_body(raw_msg: bytes) -> str:
 
 
 def fetch_email_reply_commands() -> list[str]:
-    """
-    Poll Gmail inbox for unread emails from ALLOWED_EMAIL and extract commands.
-    Supported commands: YES, STATUS.
+    """Poll Gmail for unread messages from the allowed user and parse commands.
+
+    Searches ``INBOX`` for ``UNSEEN`` messages where the From address matches
+    ``ALLOWED_EMAIL``. For each message, if the decoded body (lowercased) starts
+    with ``yes`` or ``status``, appends ``\"yes\"`` or ``\"status\"`` to the
+    result list. Order follows IMAP search order.
+
+    Returns:
+        A list of command strings (``\"yes\"`` / ``\"status\"``). Empty on no
+        matches or on IMAP errors (errors are logged).
     """
     commands: list[str] = []
     try:

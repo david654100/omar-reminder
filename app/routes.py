@@ -1,4 +1,12 @@
-"""Flask routes: SMS webhook, Google OAuth, and web dashboard."""
+"""HTTP routes for the Omer Reminder app.
+
+Blueprint ``main`` exposes:
+
+* Google OAuth login (Authlib) restricted to ``config.ALLOWED_EMAIL``.
+* Authenticated dashboard and JSON override API for marking days counted.
+* Twilio SMS webhook at ``/webhook`` (no session auth).
+* Public legal pages ``/privacy`` and ``/terms``.
+"""
 
 import functools
 from datetime import datetime, timedelta
@@ -15,6 +23,8 @@ bp = Blueprint("main", __name__)
 
 
 def login_required(f):
+    """Redirect unauthenticated users to the login page."""
+
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         if not session.get("user_email"):
@@ -198,9 +208,11 @@ def override_day():
 
 @bp.route("/privacy")
 def privacy():
+    """Public privacy policy page (no login required)."""
     return render_template("privacy.html")
 
 
 @bp.route("/terms")
 def terms():
+    """Public terms and conditions page (no login required)."""
     return render_template("terms.html")

@@ -1,3 +1,18 @@
+"""Application configuration loaded from environment variables.
+
+Required variables (see ``.env.example``):
+
+* Twilio: ``TWILIO_ACCOUNT_SID``, ``TWILIO_AUTH_TOKEN``, ``TWILIO_PHONE_NUMBER``,
+  ``MY_PHONE_NUMBER``
+* Gmail: ``GMAIL_ADDRESS``, ``GMAIL_APP_PASSWORD`` (app password for SMTP/IMAP)
+* Google OAuth: ``GOOGLE_CLIENT_ID``, ``GOOGLE_CLIENT_SECRET``, ``ALLOWED_EMAIL``
+
+Optional variables include ``GMAIL_IMAP_HOST``, ``EMAIL_REPLY_POLL_MINUTES``,
+``LATITUDE``, ``LONGITUDE``, ``TIMEZONE``, ``MORNING_REMINDER_HOUR``, etc.
+
+Email notifications are always sent to ``ALLOWED_EMAIL`` only.
+"""
+
 import os
 from dotenv import load_dotenv
 

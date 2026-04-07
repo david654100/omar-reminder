@@ -1,4 +1,7 @@
-"""Set dummy environment variables before any app imports."""
+"""Pytest plugin: set dummy environment variables before importing the app.
+
+Ensures ``app.config`` can load in tests without a real ``.env`` file.
+"""
 
 import os
 
