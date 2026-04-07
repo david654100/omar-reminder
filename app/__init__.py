@@ -14,6 +14,14 @@ oauth = OAuth()
 
 
 def create_app() -> Flask:
+    """Build and configure the Flask application.
+
+    Initializes logging, session secret, Google OAuth, SQLite tracker, and
+    registers the ``main`` blueprint.
+
+    Returns:
+        Configured :class:`flask.Flask` instance.
+    """
     application = Flask(__name__)
     application.secret_key = config.SECRET_KEY
 

@@ -1,4 +1,7 @@
-"""Development entry point: python run.py"""
+"""Development entry point: ``python run.py``.
+
+Creates the Flask app, starts APScheduler, and binds to ``0.0.0.0:5000``.
+"""
 
 from app import create_app
 from app import scheduler
