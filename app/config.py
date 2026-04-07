@@ -8,6 +8,11 @@ TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
 TWILIO_PHONE_NUMBER = os.environ["TWILIO_PHONE_NUMBER"]
 MY_PHONE_NUMBER = os.environ["MY_PHONE_NUMBER"]
 
+GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"]
+GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
+GMAIL_IMAP_HOST = os.getenv("GMAIL_IMAP_HOST", "imap.gmail.com")
+EMAIL_REPLY_POLL_MINUTES = int(os.getenv("EMAIL_REPLY_POLL_MINUTES", "5"))
+
 LATITUDE = float(os.getenv("LATITUDE", "44.9778"))
 LONGITUDE = float(os.getenv("LONGITUDE", "-93.2650"))
 TIMEZONE = os.getenv("TIMEZONE", "America/Chicago")
